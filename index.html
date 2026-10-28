@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0709">
+<title>Прокляни друга</title>
+<style>
+  :root {
+    --bg: #0b0709;
+    --bg2: #1a0f12;
+    --ink: #e9dcc3;
+    --muted: #a89880;
+    --blood: #8e1b1b;
+    --blood-hi: #b52a22;
+    --gold: #d9a441;
+    --paper: #1e1612;
+    --line: #3a2a22;
+    --font: "Palatino Linotype", "Book Antiqua", Palatino, "Georgia", "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: radial-gradient(ellipse at 50% 0%, #2a1416 0%, var(--bg2) 35%, var(--bg) 75%) fixed, var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
+  }
+  .screen {
+    width: 100%;
+    max-width: 440px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 20px;
+    animation: fadeIn 1.2s ease both;
+  }
+  [hidden] { display: none !important; }
+  h1 {
+    margin: 0;
+    font-size: clamp(2.2rem, 11vw, 3.2rem);
+    font-weight: normal;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    color: var(--blood-hi);
+    text-shadow: 0 2px 0 #000, 0 0 24px rgba(142, 27, 27, 0.45);
+    line-height: 1.1;
+  }
+  .sub {
+    margin: -8px 0 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 1.05rem;
+  }
+  .ornament { color: var(--line); letter-spacing: 0.5em; font-size: 0.9rem; user-select: none; }
+  .card {
+    width: 100%;
+    background: linear-gradient(180deg, rgba(40, 28, 22, 0.85), rgba(22, 15, 13, 0.9));
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 22px 18px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: left;
+  }
+  label { display: flex; flex-direction: column; gap: 6px; font-style: italic; color: var(--muted); font-size: 1rem; }
+  input[type="text"] {
+    font: inherit;
+    font-size: 1.15rem;
+    color: var(--ink);
+    background: rgba(0, 0, 0, 0.35);
+    border: none;
+    border-bottom: 1px solid var(--line);
+    border-radius: 3px 3px 0 0;
+    padding: 10px 10px 8px;
+    outline: none;
+    transition: border-color 0.4s, background 0.4s;
+    width: 100%;
+  }
+  input[type="text"]:focus { border-bottom-color: var(--gold); background: rgba(0, 0, 0, 0.5); }
+  .counter { align-self: flex-end; font-size: 0.8rem; color: #6d5d4f; font-style: normal; }
+  button {
+    font: inherit;
+    font-size: 1.15rem;
+    font-style: italic;
+    color: var(--ink);
+    background: linear-gradient(180deg, var(--blood), #5e1010);
+    border: 1px solid #a83a2c;
+    border-radius: 4px;
+    padding: 14px 20px;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    transition: background 0.4s, transform 0.15s;
+  }
+  button:hover { background: linear-gradient(180deg, var(--blood-hi), #6d1414); }
+  button:active { transform: translateY(1px); }
+  button.ghost { background: transparent; border-color: var(--line); color: var(--muted); }
+  button.ghost:hover { background: rgba(255, 255, 255, 0.03); color: var(--ink); }
+  .error { color: #d88a6a; font-size: 0.95rem; min-height: 1.2em; margin: 0; font-style: italic; }
+  .result { display: flex; flex-direction: column; gap: 12px; animation: fadeIn 1s ease both; }
+  .link-box {
+    font-family: ui-monospace, "Consolas", monospace;
+    font-size: 0.85rem;
+    color: var(--gold);
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px dashed var(--line);
+    border-radius: 4px;
+    padding: 10px;
+    word-break: break-all;
+    user-select: all;
+  }
+  .hint { color: var(--muted); font-size: 0.9rem; font-style: italic; margin: 0; }
+
+  /* Экран друга */
+  .invite { font-size: 1.35rem; line-height: 1.5; font-style: italic; margin: 0; }
+  .invite b { color: var(--gold); font-weight: normal; }
+  .curse-text {
+    font-size: clamp(1.3rem, 6vw, 1.6rem);
+    line-height: 1.55;
+    font-style: italic;
+    min-height: 6em;
+    margin: 0;
+    padding: 0 4px;
+  }
+  .curse-text span { opacity: 0; animation: letter 1.4s ease forwards; }
+  .curse-text .name { color: var(--gold); }
+
+  /* Свеча */
+  .candle-wrap { position: relative; width: 120px; height: 230px; margin: 10px auto 0; }
+  .glow {
+    position: absolute;
+    left: 50%; top: 10px;
+    width: 220px; height: 220px;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(255, 170, 70, 0.22) 0%, rgba(255, 120, 40, 0.08) 40%, transparent 70%);
+    border-radius: 50%;
+    animation: glow 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .flame {
+    position: absolute;
+    left: 50%; top: 22px;
+    width: 22px; height: 52px;
+    margin-left: -11px;
+    border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+    background: radial-gradient(ellipse at 50% 80%, #fff7d6 0%, #ffd36b 30%, #ff9a2e 60%, rgba(255, 90, 20, 0.0) 100%);
+    box-shadow: 0 0 18px 4px rgba(255, 160, 60, 0.35);
+    transform-origin: 50% 100%;
+    animation: sway 3.2s ease-in-out infinite;
+  }
+  .flame::after {
+    content: "";
+    position: absolute;
+    left: 50%; bottom: 4px;
+    width: 8px; height: 16px;
+    margin-left: -4px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(80, 120, 255, 0.55), transparent 70%);
+  }
+  .wick { position: absolute; left: 50%; top: 70px; width: 3px; height: 12px; margin-left: -1.5px; background: #1b1310; border-radius: 1px; }
+  .wax {
+    position: absolute;
+    left: 50%; top: 80px;
+    width: 56px; height: 130px;
+    margin-left: -28px;
+    background: linear-gradient(90deg, #8a7b66 0%, #e8dcc2 30%, #f3ead6 50%, #d6c8ac 75%, #7c6d59 100%);
+    border-radius: 6px 6px 3px 3px;
+  }
+  .wax::before {
+    content: "";
+    position: absolute;
+    left: 6px; top: -3px;
+    width: 14px; height: 34px;
+    background: linear-gradient(90deg, #d8cbb0, #f3ead6);
+    border-radius: 0 0 8px 8px;
+  }
+  .wax::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(ellipse at 50% 0%, rgba(255, 170, 70, 0.35), transparent 55%);
+  }
+  .plate {
+    position: absolute;
+    left: 50%; bottom: 8px;
+    width: 110px; height: 16px;
+    margin-left: -55px;
+    background: linear-gradient(180deg, #4a3a2c, #1f1712);
+    border-radius: 50%;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+  }
+  .bottom { width: 100%; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes letter { from { opacity: 0; filter: blur(3px); } to { opacity: 1; filter: blur(0); } }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-2deg) scaleY(1); }
+    25% { transform: rotate(1.5deg) scaleY(1.04); }
+    50% { transform: rotate(-1deg) scaleY(0.98); }
+    75% { transform: rotate(2deg) scaleY(1.03); }
+  }
+  @keyframes glow { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+    .curse-text span { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Экран отправителя -->
+<main class="screen" id="sender" hidden>
+  <div class="ornament">✦ ✦ ✦</div>
+  <h1>Прокляни друга</h1>
+  <p class="sub">Древнее, как сама тоска по выходным</p>
+
+  <form class="card" id="curseForm" novalidate autocomplete="off">
+    <label>Имя друга
+      <input type="text" id="friendName" maxlength="30" placeholder="Кого проклинаем?">
+      <span class="counter" id="friendCount">0/30</span>
+    </label>
+    <label>Твоё имя
+      <input type="text" id="senderName" maxlength="30" placeholder="Кто проклинает?">
+      <span class="counter" id="senderCount">0/30</span>
+    </label>
+    <p class="error" id="formError"></p>
+    <button type="submit">Проклясть</button>
+
+    <div class="result" id="result" hidden>
+      <p class="hint">Проклятие готово. Отправь эту ссылку другу:</p>
+      <div class="link-box" id="linkBox"></div>
+      <button type="button" id="copyBtn">Скопировать ссылку</button>
+    </div>
+  </form>
+  <div class="ornament">✦ ✦ ✦</div>
+</main>
+
+<!-- Экран друга: приглашение -->
+<main class="screen" id="invite" hidden>
+  <div class="ornament">✦ ✦ ✦</div>
+  <p class="invite">Тебе пришло проклятие от <b id="fromName"></b>. Открыть?</p>
+  <button type="button" id="openBtn">Открыть</button>
+  <div class="ornament">✦ ✦ ✦</div>
+</main>
+
+<!-- Экран друга: проклятие -->
+<main class="screen" id="reveal" hidden>
+  <div class="candle-wrap" aria-hidden="true">
+    <div class="glow"></div>
+    <div class="flame"></div>
+    <div class="wick"></div>
+    <div class="wax"></div>
+    <div class="plate"></div>
+  </div>
+  <p class="curse-text" id="curseText" aria-live="polite"></p>
+  <div class="bottom">
+    <button type="button" id="liftBtn">Снять проклятие: прокляни троих друзей</button>
+  </div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var CURSES = [
+    "следующие 7 дней наушники будут запутываться сами по себе.",
+    "пусть каждый твой бутерброд падает маслом вниз — и только на чистый пол.",
+    "отныне носки будут теряться строго по одному из пары.",
+    "пусть зарядка всегда оказывается на десять сантиметров короче, чем нужно.",
+    "всю неделю ты будешь заходить в комнату и не помнить зачем.",
+    "пусть в любой очереди соседняя касса движется быстрее.",
+    "пусть пакет-майка в магазине никогда не открывается с первой попытки.",
+    "отныне Wi-Fi будет пропадать ровно на самом интересном месте.",
+    "пусть одеяло каждую ночь уползает в угол пододеяльника.",
+    "пусть чай всегда остывает, пока ты отвечаешь на одно сообщение.",
+    "пусть песня из рекламы застрянет у тебя в голове на трое суток.",
+    "пусть автозамена упорно исправляет «привет» на «привидение».",
+    "пусть каждая новая ручка начинает писать только после десяти кругов на бумаге.",
+    "в этом месяце тебе будут доставаться только тележки с кривым колёсиком.",
+    "пусть крышка от кастрюли никогда не подходит с первого раза.",
+    "пусть флешка вставляется правильной стороной только с третьей попытки.",
+    "пусть уличные коты смотрят на тебя с лёгким осуждением.",
+    "пусть дождь начинается ровно через пять минут после того, как ты помоешь окна.",
+    "пусть шнурки развязываются именно тогда, когда у тебя заняты руки.",
+    "пусть в каждой пачке чипсов будет на одну чипсину меньше, чем хочется.",
+    "пусть кнопка «Пропустить рекламу» появляется на секунду позже, чем ты по ней жмёшь.",
+    "пусть пульт от телевизора каждый день прячется в диване глубже, чем вчера.",
+    "пусть ценники на подарках никогда не отклеиваются целиком.",
+    "пусть лифт приезжает ровно тогда, когда ты уже поднимаешься пешком на третий этаж.",
+    "пусть твой зонт выворачивается наизнанку от самого лёгкого ветерка.",
+    "пусть в каждом сериале любимый персонаж появляется только в последней серии.",
+    "пусть мармеладные мишки в пачке будут только твоего нелюбимого цвета.",
+    "пусть соседи начинают сверлить ровно тогда, когда ты садишься отдохнуть.",
+    "пусть скотч прячет свой кончик, едва ты его отпускаешь.",
+    "пусть подушка неделю будет тёплой с обеих сторон."
+  ];
+
+  var MAX = 30;
+  var $ = function (id) { return document.getElementById(id); };
+
+  // --- Кодирование: UTF-8 -> base64url ---
+  function encode(obj) {
+    var bytes = new TextEncoder().encode(JSON.stringify(obj));
+    var bin = "";
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function decode(str) {
+    try {
+      var b64 = str.replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      var bin = atob(b64);
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var data = JSON.parse(new TextDecoder().decode(bytes));
+      if (!data || typeof data.f !== "string" || typeof data.s !== "string") return null;
+      var f = clean(data.f), s = clean(data.s);
+      if (!f || !s) return null;
+      return { f: f, s: s };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function clean(v) {
+    return Array.from(String(v).replace(/[\u0000-\u001F\u007F]/g, "").trim()).slice(0, MAX).join("");
+  }
+
+  function baseUrl() { return location.href.split("#")[0]; }
+
+  function show(id) {
+    ["sender", "invite", "reveal"].forEach(function (s) { $(s).hidden = (s !== id); });
+    window.scrollTo(0, 0);
+  }
+
+  // --- Экран отправителя ---
+  function bindCounter(input, counter) {
+    var upd = function () {
+      var len = Array.from(input.value).length;
+      if (len > MAX) input.value = Array.from(input.value).slice(0, MAX).join("");
+      counter.textContent = Math.min(len, MAX) + "/" + MAX;
+    };
+    input.addEventListener("input", upd);
+    upd();
+  }
+  bindCounter($("friendName"), $("friendCount"));
+  bindCounter($("senderName"), $("senderCount"));
+
+  var currentLink = "";
+
+  $("curseForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var f = clean($("friendName").value);
+    var s = clean($("senderName").value);
+    var err = $("formError");
+    if (!f || !s) {
+      err.textContent = "Без имён проклятие не сработает.";
+      $("result").hidden = true;
+      return;
+    }
+    err.textContent = "";
+    currentLink = baseUrl() + "#" + encode({ f: f, s: s });
+    $("linkBox").textContent = currentLink;
+    $("copyBtn").textContent = "Скопировать ссылку";
+    $("result").hidden = false;
+  });
+
+  function fallbackCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  $("copyBtn").addEventListener("click", function () {
+    var btn = this;
+    var done = function (ok) {
+      btn.textContent = ok ? "Скопировано ✦" : "Не вышло — выдели ссылку вручную";
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(currentLink).then(function () { done(true); }, function () { done(fallbackCopy(currentLink)); });
+    } else {
+      done(fallbackCopy(currentLink));
+    }
+  });
+
+  // --- Экран друга ---
+  var revealTimer = null;
+  var payload = null;
+
+  $("openBtn").addEventListener("click", function () {
+    show("reveal");
+    startReveal(payload);
+  });
+
+  function startReveal(data) {
+    var box = $("curseText");
+    box.textContent = "";
+    if (revealTimer) clearTimeout(revealTimer);
+
+    var curse = CURSES[Math.floor(Math.random() * CURSES.length)];
+    var parts = [
+      { text: data.f, cls: "name" },
+      { text: ", " + curse, cls: "" }
+    ];
+    var queue = [];
+    parts.forEach(function (p) {
+      Array.from(p.text).forEach(function (ch) { queue.push({ ch: ch, cls: p.cls }); });
+    });
+
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var i = 0;
+    var step = function () {
+      if (i >= queue.length) return;
+      var span = document.createElement("span");
+      if (queue[i].cls) span.className = queue[i].cls;
+      span.textContent = queue[i].ch;
+      box.appendChild(span);
+      i++;
+      revealTimer = setTimeout(step, reduce ? 0 : 75);
+    };
+    revealTimer = setTimeout(step, reduce ? 0 : 1500);
+  }
+
+  $("liftBtn").addEventListener("click", function () {
+    if (revealTimer) clearTimeout(revealTimer);
+    history.replaceState(null, "", baseUrl());
+    route();
+  });
+
+  // --- Маршрутизация ---
+  function route() {
+    var hash = location.hash.slice(1);
+    payload = hash ? decode(hash) : null;
+    if (payload) {
+      $("fromName").textContent = payload.s;
+      show("invite");
+    } else {
+      $("result").hidden = true;
+      $("formError").textContent = "";
+      show("sender");
+    }
+  }
+
+  window.addEventListener("hashchange", route);
+  route();
+})();
+</script>
+</body>
+</html>
